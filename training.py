@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Global normalization variables
 km_mean = 0
 km_std = 0
 price_mean = 0
@@ -34,6 +34,8 @@ def denormalize_line(x_values, line_y_normalized):
 
 def training(data, learning_rate, iteration):
     views = []
+    errors = []
+    error_curve = []  # To store the mean squared error for each iteration
 
     theta0 = 0
     theta1 = 0
@@ -44,40 +46,50 @@ def training(data, learning_rate, iteration):
     for i in range(iteration):
         total_diff_theta0 = 0
         total_diff_theta1 = 0
+        total_error = 0
         size = len(data)
+        current_errors = []
 
         for km, price in zip(x_values, y_values):
             current_diff = (theta0 + theta1 * km) - price
             total_diff_theta0 += current_diff
             total_diff_theta1 += current_diff * km
+            total_error += current_diff ** 2
+            current_errors.append((current_diff, i))
         
         theta0 -= total_diff_theta0 / size * learning_rate
         theta1 -= total_diff_theta1 / size * learning_rate
 
         line_y_normalized = theta0 + theta1 * x_values
-        
         views.append((x_values, line_y_normalized))
+        errors.append(current_errors)
+        error_curve.append(total_error / (2 * size))  # Mean squared error
 
     parameter_file = 'parameters.txt'
     write_parameters(parameter_file, theta0, theta1)
 
-    return views
+    return views, error_curve
 
-def display_plot(views, data):
+def display_plot(views, errors, data):
     current_view = [0]
+    show_errors = [False]
 
     def update_plot(view_index):
         ax.clear()
         x_values, line_y_normalized = views[view_index]
         x_values_denormalized, line_y_denormalized = denormalize_line(x_values, line_y_normalized)
-        
-        ax.plot(x_values_denormalized, line_y_denormalized, label=f'Iteration {view_index + 1}')
-        
-        ax.scatter(data['km'], data['price'], color='red', label='Data Points')
-        
-        ax.set_title('Car Price vs Kilometers Driven')
-        ax.set_xlabel('Kilometers Driven')
-        ax.set_ylabel('Price')
+
+        if show_errors[0]:
+            ax.plot(range(1, len(errors) + 1), errors, marker='o', color='blue', label=f'Iteration {view_index + 1}')
+            ax.set_title('Error Curve')
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Diff')
+        else:
+            ax.scatter(data['km'], data['price'], color='red', label='Data Points')
+            ax.plot(x_values_denormalized, line_y_denormalized, label=f'Iteration {view_index + 1}')
+            ax.set_title('Car Price vs Kilometers Driven')
+            ax.set_xlabel('Kilometers Driven')
+            ax.set_ylabel('Price')
         
         ax.legend()
         plt.draw()
@@ -89,6 +101,9 @@ def display_plot(views, data):
         if event.key == ' ':
             current_view[0] = (current_view[0] + 10) % len(views)
             update_plot(current_view[0])
+        elif event.key == 'e':
+            show_errors[0] = not show_errors[0]
+            update_plot(current_view[0])
 
     fig.canvas.mpl_connect('key_press_event', on_key)
 
@@ -97,8 +112,8 @@ def display_plot(views, data):
 def main():
     data = pd.read_csv('data.csv')
     data = normalize(data)
-    views = training(data, 0.001, 10000)
-    display_plot(views, data)
+    views, errors = training(data, 0.001, 5000)
+    display_plot(views, errors, data)
 
 if __name__ == "__main__":
     try:
