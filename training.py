@@ -57,13 +57,13 @@ def training(data, learning_rate, iteration):
             total_error += current_diff ** 2
             current_errors.append((current_diff, i))
         
-        theta0 -= total_diff_theta0 / size * learning_rate
-        theta1 -= total_diff_theta1 / size * learning_rate
+        theta0 -= (total_diff_theta0 / size) * learning_rate
+        theta1 -= (total_diff_theta1 / size) * learning_rate
 
         line_y_normalized = theta0 + theta1 * x_values
         views.append((x_values, line_y_normalized))
         errors.append(current_errors)
-        error_curve.append(total_error / (2 * size))  # Mean squared error
+        error_curve.append(total_error / (2 * size))
 
     parameter_file = 'parameters.txt'
     write_parameters(parameter_file, theta0, theta1)
@@ -80,7 +80,7 @@ def display_plot(views, errors, data):
         x_values_denormalized, line_y_denormalized = denormalize_line(x_values, line_y_normalized)
 
         if show_errors[0]:
-            ax.plot(range(1, len(errors) + 1), errors, marker='o', color='blue', label=f'Iteration {view_index + 1}')
+            ax.plot(np.linspace(0, 1, len(errors)), errors, color='blue', label=f'Iteration {view_index + 1}')
             ax.set_title('Error Curve')
             ax.set_xlabel('Time')
             ax.set_ylabel('Diff')
@@ -110,7 +110,7 @@ def display_plot(views, errors, data):
     plt.show()
 
 def main():
-    data = pd.read_csv('data.csv')
+    data = pd.read_csv('data/data.csv')
     data = normalize(data)
     views, errors = training(data, 0.001, 5000)
     display_plot(views, errors, data)
