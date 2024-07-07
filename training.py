@@ -1,6 +1,5 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 km_mean = 0
 km_std = 0
@@ -35,9 +34,8 @@ def denormalize_line(x_values, line_y_normalized):
 def training(data, learning_rate, iteration):
     views = []
     errors = []
-    error_curve = []  # To store the mean squared error for each iteration
 
-    theta0 = 0
+    theta0 = -price_mean / price_std
     theta1 = 0
 
     x_values = data['km_normalized'].to_numpy()
@@ -62,13 +60,12 @@ def training(data, learning_rate, iteration):
 
         line_y_normalized = theta0 + theta1 * x_values
         views.append((x_values, line_y_normalized))
-        errors.append(current_errors)
-        error_curve.append(total_error / (2 * size))
+        errors.append(total_error / (2 * size))
 
     parameter_file = 'parameters.txt'
     write_parameters(parameter_file, theta0, theta1)
 
-    return views, error_curve
+    return views, errors
 
 def display_plot(views, errors, data):
     current_view = [0]
@@ -80,10 +77,11 @@ def display_plot(views, errors, data):
         x_values_denormalized, line_y_denormalized = denormalize_line(x_values, line_y_normalized)
 
         if show_errors[0]:
-            ax.plot(np.linspace(0, 1, len(errors)), errors, color='blue', label=f'Iteration {view_index + 1}')
+            ax.plot(range(len(errors)), errors, color='blue', label='Error Curve')
+            ax.scatter(view_index, errors[view_index], color='blue', label=f'Iteration {view_index + 1}')
             ax.set_title('Error Curve')
-            ax.set_xlabel('Time')
-            ax.set_ylabel('Diff')
+            ax.set_xlabel('Iteration')
+            ax.set_ylabel('Error')
         else:
             ax.scatter(data['km'], data['price'], color='red', label='Data Points')
             ax.plot(x_values_denormalized, line_y_denormalized, label=f'Iteration {view_index + 1}')
@@ -104,13 +102,15 @@ def display_plot(views, errors, data):
         elif event.key == 'e':
             show_errors[0] = not show_errors[0]
             update_plot(current_view[0])
+        elif event.key == 'escape':
+            plt.close(fig)
 
     fig.canvas.mpl_connect('key_press_event', on_key)
 
     plt.show()
 
 def main():
-    data = pd.read_csv('data/data.csv')
+    data = pd.read_csv('data/data2.csv')
     data = normalize(data)
     views, errors = training(data, 0.001, 5000)
     display_plot(views, errors, data)
