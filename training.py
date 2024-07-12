@@ -7,8 +7,8 @@ price_mean = 0
 price_std = 0
 
 def write_parameters(file_path, theta0, theta1):
-    theta1_denormalized = theta1 * price_std / km_std
-    theta0_denormalized = price_mean + theta0 * price_std - theta1_denormalized * km_mean
+    theta0_denormalized = theta0 * price_std / km_std
+    theta1_denormalized = price_mean + theta1 * price_std - theta0_denormalized * km_mean
     with open(file_path, 'w') as file:
         file.write(f"{theta0_denormalized}\n")
         file.write(f"{theta1_denormalized}\n")
@@ -19,10 +19,10 @@ def normalize(data):
     km_std = data['km'].std()
     price_mean = data['price'].mean()
     price_std = data['price'].std()
-    
+
     data['km_normalized'] = (data['km'] - km_mean) / km_std
     data['price_normalized'] = (data['price'] - price_mean) / price_std
-    
+
     return data
 
 def denormalize_line(x_values, line_y_normalized):
@@ -35,8 +35,8 @@ def training(data, learning_rate, iteration):
     views = []
     errors = []
 
-    theta0 = -price_mean / price_std
-    theta1 = 0
+    theta0 = 0
+    theta1 = -price_mean / price_std
 
     x_values = data['km_normalized'].to_numpy()
     y_values = data['price_normalized'].to_numpy()
@@ -49,16 +49,16 @@ def training(data, learning_rate, iteration):
         current_errors = []
 
         for km, price in zip(x_values, y_values):
-            current_diff = (theta0 + theta1 * km) - price
-            total_diff_theta0 += current_diff
-            total_diff_theta1 += current_diff * km
+            current_diff = (theta0 * km + theta1) - price
+            total_diff_theta0 += current_diff * km
+            total_diff_theta1 += current_diff
             total_error += current_diff ** 2
             current_errors.append((current_diff, i))
-        
+
         theta0 -= (total_diff_theta0 / size) * learning_rate
         theta1 -= (total_diff_theta1 / size) * learning_rate
 
-        line_y_normalized = theta0 + theta1 * x_values
+        line_y_normalized = theta0 * x_values + theta1
         views.append((x_values, line_y_normalized))
         errors.append(total_error / (2 * size))
 
@@ -85,10 +85,11 @@ def display_plot(views, errors, data):
         else:
             ax.scatter(data['km'], data['price'], color='red', label='Data Points')
             ax.plot(x_values_denormalized, line_y_denormalized, label=f'Iteration {view_index + 1}')
+            ax.set_ylim(-100, max(data['price']) * 1.1)
             ax.set_title('Car Price vs Kilometers Driven')
             ax.set_xlabel('Kilometers Driven')
             ax.set_ylabel('Price')
-        
+
         ax.legend()
         plt.draw()
 
@@ -110,7 +111,7 @@ def display_plot(views, errors, data):
     plt.show()
 
 def main():
-    data = pd.read_csv('data/data2.csv')
+    data = pd.read_csv('data/data.csv')
     data = normalize(data)
     views, errors = training(data, 0.001, 5000)
     display_plot(views, errors, data)
