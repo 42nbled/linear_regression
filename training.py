@@ -69,14 +69,15 @@ def training(data, learning_rate, iteration):
 
 def display_plot(views, errors, data):
     current_view = [0]
-    show_errors = [False]
+    show_errors = False
 
     def update_plot(view_index):
+        nonlocal show_errors
         ax.clear()
         x_values, line_y_normalized = views[view_index]
         x_values_denormalized, line_y_denormalized = denormalize_line(x_values, line_y_normalized)
 
-        if show_errors[0]:
+        if show_errors:
             ax.plot(range(len(errors)), errors, color='blue', label='Error Curve')
             ax.scatter(view_index, errors[view_index], color='blue', label=f'Iteration {view_index + 1}')
             ax.set_title('Error Curve')
@@ -97,11 +98,12 @@ def display_plot(views, errors, data):
     update_plot(current_view[0])
 
     def on_key(event):
+        nonlocal show_errors
         if event.key == ' ':
             current_view[0] = (current_view[0] + 10) % len(views)
             update_plot(current_view[0])
         elif event.key == 'e':
-            show_errors[0] = not show_errors[0]
+            show_errors = not show_errors
             update_plot(current_view[0])
         elif event.key == 'escape':
             plt.close(fig)
