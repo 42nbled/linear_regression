@@ -5,7 +5,7 @@ def read_parameters(file_path):
     return theta0, theta1
 
 def predict_price(mileage, theta0, theta1):
-    return theta0 * mileage + theta1
+    return theta0 + mileage * theta1
 
 def main():
     parameter_file = 'parameters.txt'
@@ -17,16 +17,15 @@ def main():
 
     try:
         mileage = float(input("Enter the mileage of the car: "))
+        estimated_price = predict_price(mileage, theta0, theta1)
+        print(f"The estimated price of the car for {mileage} miles is: ${estimated_price:.2f}")
     except ValueError:
         print("Error: Please enter a valid number for mileage.")
-        return
-
-    estimated_price = predict_price(mileage, theta0, theta1)
-    print(f"The estimated price of the car for {mileage} miles is: ${estimated_price:.2f}")
+    except KeyboardInterrupt:
+        print("\nProcess interrupted by user. Exiting gracefully...")
+    except Exception as error:
+        print(f"An error occurred: {error}")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as error:
-        print(error)
+    main()

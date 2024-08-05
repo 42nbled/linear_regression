@@ -7,8 +7,8 @@ price_mean = 0
 price_std = 0
 
 def write_parameters(file_path, theta0, theta1):
-    theta0_denormalized = theta0 * price_std / km_std
-    theta1_denormalized = price_mean + theta1 * price_std - theta0_denormalized * km_mean
+    theta1_denormalized = theta1 * price_std / km_std
+    theta0_denormalized = price_mean + theta0 * price_std - theta1_denormalized * km_mean
     with open(file_path, 'w') as file:
         file.write(f"{theta0_denormalized}\n")
         file.write(f"{theta1_denormalized}\n")
@@ -36,7 +36,8 @@ def training(data, learning_rate, iteration):
     errors = []
 
     theta0 = 0
-    theta1 = -price_mean / price_std
+    # theta0 = -price_mean / price_std
+    theta1 = 0
 
     x_values = data['km_normalized'].to_numpy()
     y_values = data['price_normalized'].to_numpy()
@@ -49,16 +50,16 @@ def training(data, learning_rate, iteration):
         current_errors = []
 
         for km, price in zip(x_values, y_values):
-            current_diff = (theta0 * km + theta1) - price
-            total_diff_theta0 += current_diff * km
-            total_diff_theta1 += current_diff
+            current_diff = (theta0 + km * theta1) - price
+            total_diff_theta0 += current_diff
+            total_diff_theta1 += current_diff * km
             total_error += current_diff ** 2
             current_errors.append((current_diff, i))
 
         theta0 -= (total_diff_theta0 / size) * learning_rate
         theta1 -= (total_diff_theta1 / size) * learning_rate
 
-        line_y_normalized = theta0 * x_values + theta1
+        line_y_normalized = theta0 + x_values * theta1
         views.append((x_values, line_y_normalized))
         errors.append(total_error / (2 * size))
 
@@ -113,13 +114,15 @@ def display_plot(views, errors, data):
     plt.show()
 
 def main():
-    data = pd.read_csv('data/data.csv')
-    data = normalize(data)
-    views, errors = training(data, 0.001, 5000)
-    display_plot(views, errors, data)
+    try:
+        data = pd.read_csv('data/data.csv')
+        data = normalize(data)
+        views, errors = training(data, 0.001, 5000)
+        display_plot(views, errors, data)
+    except KeyboardInterrupt:
+        print("\nProcess interrupted by user. Exiting gracefully...")
+    except Exception as error:
+        print(f"An error occurred: {error}")
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as error:
-        print(error)
+    main()
