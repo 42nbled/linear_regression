@@ -1,0 +1,3 @@
+# linear regression
+
+This project involves implementing a simple linear regression model to predict car prices based on mileage. It requires creating two programs: one for predicting prices using a pre-trained model and another for training the model using gradient descent. The training program optimizes parameters (theta0 and theta1) by minimizing prediction errors. Additionally, the project emphasizes using data visualization to plot the dataset and regression line, as well as evaluating the model’s precision. It provides hands-on experience with machine learning fundamentals, including data processing, optimization, and result interpretation.
